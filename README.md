@@ -113,6 +113,7 @@ For reference, the following fields are available on the log event:
 `.Info.Host` - The host which produced the event  
 `.Message` - The log message  
 `.Data` - Structured log context  
+`.DataFlat` - A flattened copy of the structured log context  
 `.TaskShort` - A shortened format for task UUID based on stream name  
 `.TimeShort` - A shortened time stamp based on client reported time  
 

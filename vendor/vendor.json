@@ -159,6 +159,12 @@
 			"revisionTime": "2017-05-09T20:44:18Z"
 		},
 		{
+			"checksumSHA1": "RCgVnrAV/eHZoFkh3RIMuKoDLUc=",
+			"path": "github.com/doublerebel/bellows",
+			"revision": "f177d92a03d33226a1e1777e4b3a5d824bd2598f",
+			"revisionTime": "2016-03-02T23:20:33Z"
+		},
+		{
 			"checksumSHA1": "16fWSep+3jUx8wADdbiTxSHjW14=",
 			"path": "github.com/fatih/color",
 			"revision": "9131ab34cf20d2f6d83fdc67168a5430d1c7dc23",

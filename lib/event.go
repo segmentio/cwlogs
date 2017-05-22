@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/doublerebel/bellows"
 	"github.com/segmentio/ecs-logs-go"
 )
 
@@ -68,6 +69,10 @@ func (e Event) TaskShort() string {
 // TimeShort gives the timestamp of an event in a readable format
 func (e Event) TimeShort() string {
 	return e.Time.Local().Format(ShortTimeFormat)
+}
+
+func (e Event) DataFlat() map[string]interface{} {
+	return bellows.Flatten(e.Data)
 }
 
 // ByCreationTime is used to sort events by their creation time

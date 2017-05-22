@@ -6,13 +6,13 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/pkg/errors"
 	"github.com/segmentio/cwlogs/lib"
+	"github.com/spf13/cobra"
 )
 
 const (
-	verboseFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ range $key, $value := .Data }} {{ printf "%v=%v" $key $value }} {{end}} {{ .Message }}`
+	verboseFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ range $key, $value := .DataFlat }} {{ printf "%v=%v" $key $value }} {{end}} {{ .Message }}`
 	defaultFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ .Message }}`
 )
 

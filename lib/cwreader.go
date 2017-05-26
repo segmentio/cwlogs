@@ -159,25 +159,28 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 
 	streams := []*cloudwatchlogs.LogStream{}
 	if err := svc.DescribeLogStreamsPages(params, func(o *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
-		emptyPage := true
+		pastWindow := false
 		for _, s := range o.LogStreams {
 			if len(streams) >= MaxStreams {
 				return false
 			}
+			if s.LastEventTimestamp == nil {
+				// treat nil timestamps as 0
+				s.LastEventTimestamp = aws.Int64(0)
+			}
+
 			if !end.IsZero() && s.CreationTime != nil && *s.CreationTime > endTimestamp {
 				continue
 			}
-			if s.LastEventTimestamp != nil && *s.LastEventTimestamp < startTimestamp {
-				continue
+			if *s.LastEventTimestamp < startTimestamp {
+				pastWindow = true
+				break
 			}
 			streams = append(streams, s)
-			emptyPage = false
 		}
 
-		// If we've reached a page with no results in our time window (and
-		// have already matched at least one stream), then we don't need
-		// to look at the rest of the pages
-		if emptyPage && len(streams) > 0 {
+		// If we've iterated past our time window, stop paging
+		if pastWindow {
 			return false
 		}
 
@@ -187,7 +190,11 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 	}
 	sort.Sort(sort.Reverse(ByLastEvent(streams)))
 	if len(streams) == 0 {
-		return nil, fmt.Errorf("No logs found matching task prefix '%s'.  You can get the list of available streams using the `list` command.", streamPrefix)
+		if streamPrefix != "" {
+			return nil, fmt.Errorf("No log streams found matching task prefix '%s' in your time window.  Consider adjusting your time window with --since and/or --until", streamPrefix)
+		} else {
+			return nil, errors.New("No log streams found in your time window.  Consider adjusting your time window with --since and/or --until")
+		}
 	}
 	return streams, nil
 }
@@ -206,8 +213,14 @@ type ByLastEvent []*cloudwatchlogs.LogStream
 func (b ByLastEvent) Len() int      { return len(b) }
 func (b ByLastEvent) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
 func (b ByLastEvent) Less(i, j int) bool {
-	if b[i].LastEventTimestamp != nil && b[j].LastEventTimestamp != nil {
-		return *b[i].LastEventTimestamp < *b[j].LastEventTimestamp
+	first := b[i].LastEventTimestamp
+	second := b[j].LastEventTimestamp
+
+	if first == nil {
+		first = aws.Int64(0)
 	}
-	return true
+	if second == nil {
+		second = aws.Int64(0)
+	}
+	return *first < *second
 }

@@ -159,25 +159,28 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 
 	streams := []*cloudwatchlogs.LogStream{}
 	if err := svc.DescribeLogStreamsPages(params, func(o *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
-		emptyPage := true
+		pastWindow := false
 		for _, s := range o.LogStreams {
 			if len(streams) >= MaxStreams {
 				return false
 			}
+			if s.LastEventTimestamp == nil {
+				// treat nil timestamps as 0
+				s.LastEventTimestamp = aws.Int64(0)
+			}
+
 			if !end.IsZero() && s.CreationTime != nil && *s.CreationTime > endTimestamp {
 				continue
 			}
-			if s.LastEventTimestamp != nil && *s.LastEventTimestamp < startTimestamp {
-				continue
+			if *s.LastEventTimestamp < startTimestamp {
+				pastWindow = true
+				break
 			}
 			streams = append(streams, s)
-			emptyPage = false
 		}
 
-		// If we've reached a page with no results in our time window (and
-		// have already matched at least one stream), then we don't need
-		// to look at the rest of the pages
-		if emptyPage && len(streams) > 0 {
+		// If we've iterated past our time window, stop paging
+		if pastWindow {
 			return false
 		}
 

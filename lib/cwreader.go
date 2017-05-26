@@ -190,7 +190,11 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 	}
 	sort.Sort(sort.Reverse(ByLastEvent(streams)))
 	if len(streams) == 0 {
-		return nil, fmt.Errorf("No logs found matching task prefix '%s'.  You can get the list of available streams using the `list` command.", streamPrefix)
+		if streamPrefix != "" {
+			return nil, fmt.Errorf("No log streams found matching task prefix '%s' in your time window.  Consider adjusting your time window with --since and/or --until", streamPrefix)
+		} else {
+			return nil, errors.New("No log streams found in your time window.  Consider adjusting your time window with --since and/or --until")
+		}
 	}
 	return streams, nil
 }

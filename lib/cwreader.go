@@ -213,8 +213,14 @@ type ByLastEvent []*cloudwatchlogs.LogStream
 func (b ByLastEvent) Len() int      { return len(b) }
 func (b ByLastEvent) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
 func (b ByLastEvent) Less(i, j int) bool {
-	if b[i].LastEventTimestamp != nil && b[j].LastEventTimestamp != nil {
-		return *b[i].LastEventTimestamp < *b[j].LastEventTimestamp
+	first := b[i].LastEventTimestamp
+	second := b[j].LastEventTimestamp
+
+	if first == nil {
+		first = aws.Int64(0)
 	}
-	return true
+	if second == nil {
+		second = aws.Int64(0)
+	}
+	return *first < *second
 }

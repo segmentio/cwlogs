@@ -10,8 +10,6 @@ To install:
 $ go install github.com/segmentio/cwlogs/cmd
 ```
 
-Once https://github.com/spf13/cobra/pull/284 is merged, we will be able to install with just a single `go get`.
-
 ## Authenticating
 
 Using `cwlogs` requires you to be running in an environment with an authenticated AWS user which has read access to your logs.  The easiest way to do so is by using `aws-vault`, like:

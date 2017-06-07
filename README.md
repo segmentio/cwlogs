@@ -7,13 +7,8 @@ Simple CLI for viewing cloudwatch logs
 To install:
 
 ```bash
-$ go get github.com/segmentio/cwlogs
-$ cd $GOPATH/src/github/segmentio/cwlogs
-$ govendor sync
-$ go install
+$ go install github.com/segmentio/cwlogs/cmd
 ```
-
-Once https://github.com/spf13/cobra/pull/284 is merged, we will be able to install with just a single `go get`.
 
 ## Authenticating
 
@@ -129,7 +124,7 @@ In addition to these fields, we've made a few functions available to provide mor
 `colorlevel` - Takes a log level argument and colors it based on severity  
 `uniquecolor` - Picks a unique color based on the string input.  Will always return the same color for the same string argument.  
 
-For example, if you always only cared about the time and message of a log, and wanted the message printed in blue, you could do: 
+For example, if you always only cared about the time and message of a log, and wanted the message printed in blue, you could do:
 
 ```bash
 $ cwlogs -o "{{ .TimeShort }} - {{ blue .Message }}"

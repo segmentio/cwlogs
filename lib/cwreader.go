@@ -154,7 +154,10 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 	}
 
 	startTimestamp := start.Unix() * 1e3
-	endTimestamp := end.Unix() * 1e3
+	endTimestamp := time.Now().Unix() * 1e3
+	if !end.IsZero() {
+		endTimestamp = end.Unix() * 1e3
+	}
 
 	streams := []*cloudwatchlogs.LogStream{}
 	if err := svc.DescribeLogStreamsPages(params, func(o *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {

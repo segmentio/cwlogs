@@ -100,24 +100,30 @@ func fetch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	eventChan := logReader.StreamEvents(follow)
+
+	ticker := time.After(7 * time.Second)
+
+ReadLoop:
 	for {
-		events, err := logReader.FetchEvents()
-		if err != nil {
-			return err
-		}
-		for _, event := range events {
+		select {
+		case event, ok := <-eventChan:
+			if !ok {
+				break ReadLoop
+			}
 			err = output.Execute(os.Stdout, event)
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(os.Stdout, "\n")
-		}
-		if !follow {
-			if len(events) == 0 {
-				return ErrNoEventsFound
+			fmt.Fprintf(os.Stdout, "\n")
+			// reset slow log warning timer
+			ticker = time.After(7 * time.Second)
+		case <-ticker:
+			if !follow {
+				fmt.Fprintf(os.Stdout, "logs are taking a while to load... possibly try a smaller time window")
 			}
-			return nil
 		}
-		time.Sleep(5 * time.Second)
 	}
+
+	return logReader.Error()
 }

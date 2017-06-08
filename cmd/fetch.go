@@ -56,7 +56,7 @@ func init() {
 	fetchCmd.Flags().StringVarP(&task, "task", "t", "", "Task UUID or prefix")
 	fetchCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow log streams")
 	fetchCmd.Flags().StringVarP(&eventTemplate, "format", "o", defaultFormatString, "Format template for displaying log events")
-	fetchCmd.Flags().StringVarP(&since, "since", "s", "all", "Fetch logs since timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
+	fetchCmd.Flags().StringVarP(&since, "since", "s", "1h", "Fetch logs since timestamp (e.g. 2013-01-02T13:23:37), relative (e.g. 42m for 42 minutes), or all for all logs")
 	fetchCmd.Flags().StringVarP(&until, "until", "u", "now", "Fetch logs until timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
 	fetchCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose log output (includes log context in data fields)")
 }

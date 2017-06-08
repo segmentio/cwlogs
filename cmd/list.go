@@ -7,8 +7,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/segmentio/cwlogs/lib"
+	"github.com/spf13/cobra"
 )
 
 // listCmd represents the list command
@@ -21,7 +21,7 @@ var listCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(listCmd)
 	listCmd.Flags().StringVarP(&task, "task", "t", "", "")
-	listCmd.Flags().StringVarP(&since, "since", "s", "all", "Show logs streams with activity since timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
+	listCmd.Flags().StringVarP(&since, "since", "s", "1h", "Show logs streams with activity since timestamp (e.g. 2013-01-02T13:23:37), relative (e.g. 42m for 42 minutes), or all for all logs")
 	listCmd.Flags().StringVarP(&until, "until", "u", "now", "Show log streams until timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
 }
 

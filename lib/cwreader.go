@@ -108,7 +108,6 @@ func (c *CloudwatchLogsReader) FetchEvents() ([]Event, error) {
 	}); err != nil {
 		return events, err
 	}
-	sort.Sort(ByCreationTime(events))
 	return events, nil
 }
 

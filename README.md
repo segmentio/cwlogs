@@ -58,7 +58,7 @@ To fetch logs for a specific service, simply do:
 $ cwlogs fetch my-service
 ```
 
-By default, this will try to fetch all logs for your service, from the 100 most recently active log streams.  This is potentially a large amount of data, and could take a while for long running or busy services.
+By default, this will try to fetch logs for your service from the last hour, from the 100 most recently active log streams.  This is potentially a large amount of data, and could take a while for long running or busy services.
 
 To avoid grabbing all of that data, you can specify time ranges to fetch data from.  To set the time range, you will use the `--since` and/or the `--until` flags.  These flags can be specified in a few ways:
 * Relative times (`10m`, `1h`, etc)

@@ -102,7 +102,7 @@ func fetch(cmd *cobra.Command, args []string) error {
 
 	eventChan := logReader.StreamEvents(follow)
 
-	ticker := time.After(5 * time.Second)
+	ticker := time.After(7 * time.Second)
 
 ReadLoop:
 	for {
@@ -117,9 +117,11 @@ ReadLoop:
 			}
 			fmt.Fprintf(os.Stdout, "\n")
 			// reset slow log warning timer
-			ticker = time.After(5 * time.Second)
+			ticker = time.After(7 * time.Second)
 		case <-ticker:
-			fmt.Fprintf(os.Stdout, "logs are taking a while to load... possibly try a smaller time window")
+			if !follow {
+				fmt.Fprintf(os.Stdout, "logs are taking a while to load... possibly try a smaller time window")
+			}
 		}
 	}
 

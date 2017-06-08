@@ -167,6 +167,8 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 	params := &cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName: group.LogGroupName,
 	}
+
+	sortByTime := false
 	if streamPrefix != "" {
 		// If we are looking for a specific stream, search by prefix
 		params.LogStreamNamePrefix = aws.String(streamPrefix)
@@ -174,6 +176,7 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 		// If not, just give us the most recently active
 		params.OrderBy = aws.String("LastEventTime")
 		params.Descending = aws.Bool(true)
+		sortByTime = true
 	}
 
 	startTimestamp := start.Unix() * 1e3
@@ -194,18 +197,31 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 				s.LastEventTimestamp = aws.Int64(0)
 			}
 
-			if !end.IsZero() && s.CreationTime != nil && *s.CreationTime > endTimestamp {
-				continue
+			// if we are sorting by time, we can do some shortcuts to end
+			// paging early if we are no longer in our time window
+			if sortByTime {
+
+				if s.CreationTime != nil && *s.CreationTime > endTimestamp {
+					continue
+				}
+				if *s.LastEventTimestamp < startTimestamp {
+					pastWindow = true
+					break
+				}
+				streams = append(streams, s)
+
+			} else {
+				// otherwise we have to check all pages, but there are fewer because
+				// we are prefix matching
+				if s.CreationTime != nil && *s.CreationTime < endTimestamp &&
+					*s.LastEventTimestamp > startTimestamp {
+					streams = append(streams, s)
+				}
 			}
-			if *s.LastEventTimestamp < startTimestamp {
-				pastWindow = true
-				break
-			}
-			streams = append(streams, s)
 		}
 
-		// If we've iterated past our time window, stop paging
-		if pastWindow {
+		// If we've iterated past our time window and are sorting by time, stop paging
+		if pastWindow && sortByTime {
 			return false
 		}
 

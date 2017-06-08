@@ -29,6 +29,7 @@ type CloudwatchLogsReader struct {
 	eventCache   *lru.Cache
 	start        time.Time
 	end          time.Time
+	error        error
 }
 
 // NewCloudwatchLogsReader takes a group and optionally a stream prefix, start and
@@ -70,10 +71,18 @@ func (c *CloudwatchLogsReader) ListStreams() []*cloudwatchlogs.LogStream {
 	return c.logStreams
 }
 
-// FetchEvents attempts to read all events matching the params given in the
-// reader's constructor.  Subsequent calls to FetchEvents will return new
-// events if any have been created since the last call to FetchEvents.
-func (c *CloudwatchLogsReader) FetchEvents() ([]Event, error) {
+// StreamEvents returns a channel where you can read events matching the params
+// given in the readers constructor.  The channel will be closed once
+// all events are read or an error occurs.  You can check for errors
+// after the channel is closed by calling Error()
+func (c *CloudwatchLogsReader) StreamEvents(follow bool) <-chan Event {
+	eventChan := make(chan Event)
+	go c.pumpEvents(eventChan, follow)
+
+	return eventChan
+}
+
+func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 	startTime := c.start.Unix() * 1e3
 	params := &cloudwatchlogs.FilterLogEventsInput{
 		Interleaved:  aws.Bool(true),
@@ -82,8 +91,10 @@ func (c *CloudwatchLogsReader) FetchEvents() ([]Event, error) {
 		StartTime:    aws.Int64(startTime),
 	}
 
-	// Only set end time if it is set, otherwise always fetch up
-	// to current time.
+	if !follow {
+		c.end = time.Now()
+	}
+
 	if !c.end.IsZero() {
 		endTime := c.end.Unix() * 1e3
 		params.EndTime = aws.Int64(endTime)
@@ -93,22 +104,34 @@ func (c *CloudwatchLogsReader) FetchEvents() ([]Event, error) {
 		params.LogStreamNames = streamsToNames(c.logStreams)
 	}
 
-	// TODO: possibly we should only return a single page at a time, as
-	// large queries take a long time to page through all results
-	events := []Event{}
-	if err := c.svc.FilterLogEventsPages(params, func(o *cloudwatchlogs.FilterLogEventsOutput, lastPage bool) bool {
-		for _, event := range o.Events {
-			if _, ok := c.eventCache.Peek(*event.EventId); !ok {
-				events = append(events, NewEvent(*event, c.logGroupName))
-				c.eventCache.Add(*event.EventId, nil)
+	for {
+		if err := c.svc.FilterLogEventsPages(params, func(o *cloudwatchlogs.FilterLogEventsOutput, lastPage bool) bool {
+			for _, event := range o.Events {
+				if _, ok := c.eventCache.Peek(*event.EventId); !ok {
+					eventChan <- NewEvent(*event, c.logGroupName)
+					c.eventCache.Add(*event.EventId, nil)
+				}
 			}
+			c.nextToken = o.NextToken
+			return !lastPage
+		}); err != nil {
+			c.error = err
+			close(eventChan)
+			return
 		}
-		c.nextToken = o.NextToken
-		return !lastPage
-	}); err != nil {
-		return events, err
+
+		if !follow {
+			close(eventChan)
+			return
+		}
+
+		time.Sleep(5 * time.Second)
 	}
-	return events, nil
+}
+
+// Error returns an error if one occured while streaming events.
+func (c *CloudwatchLogsReader) Error() error {
+	return c.error
 }
 
 func getLogGroup(svc *cloudwatchlogs.CloudWatchLogs, name string) (*cloudwatchlogs.LogGroup, error) {

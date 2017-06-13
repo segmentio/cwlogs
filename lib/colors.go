@@ -48,7 +48,7 @@ func Unique(args ...string) string {
 // ColorLevel takes a log level and colors it based on severity
 func ColorLevel(l ecslogs.Level) string {
 	switch l {
-	case ecslogs.ERROR, ecslogs.ALERT:
+	case ecslogs.ERROR, ecslogs.ALERT, ecslogs.CRIT:
 		return Red(l)
 	case ecslogs.WARN:
 		return Yellow(l)

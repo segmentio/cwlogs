@@ -2,6 +2,7 @@ package lib
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -73,6 +74,14 @@ func (e Event) TimeShort() string {
 
 func (e Event) DataFlat() map[string]interface{} {
 	return bellows.Flatten(e.Data)
+}
+
+func (e Event) PrettyPrint() string {
+	pretty, err := json.MarshalIndent(e, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v", e)
+	}
+	return string(pretty)
 }
 
 // ByCreationTime is used to sort events by their creation time

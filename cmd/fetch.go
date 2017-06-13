@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	verboseFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ range $key, $value := .DataFlat }} {{ printf "%v=%v" $key $value }} {{end}} {{ .Message }}`
+	verboseFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} {{- range $key, $value := .DataFlat }} {{ printf "%v=%v" $key $value }} {{end}} {{- if gt (len .Info.Errors) 0 }} Errors=[{{- range $value := .Info.Errors }} Type={{ printf "%s" $value.Type }} Error={{ printf "%s" $value.Error }} {{ if $value.Stack }} Stack={{printf "%v" $value.Stack}} {{- end }}{{- end }}] {{ end }} - {{ .Message }}`
 	defaultFormatString = `[ {{ uniquecolor (print .TaskShort) }} ] {{ .TimeShort }} {{ colorlevel .Level }} - {{ .Message }}`
+	rawFormatString     = `{{ .PrettyPrint }}`
 )
 
 var templateFuncMap = template.FuncMap{
@@ -35,6 +36,7 @@ var (
 	since         string
 	until         string
 	verbose       bool
+	raw           bool
 )
 
 // Error messages
@@ -59,6 +61,7 @@ func init() {
 	fetchCmd.Flags().StringVarP(&since, "since", "s", "1h", "Fetch logs since timestamp (e.g. 2013-01-02T13:23:37), relative (e.g. 42m for 42 minutes), or all for all logs")
 	fetchCmd.Flags().StringVarP(&until, "until", "u", "now", "Fetch logs until timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
 	fetchCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose log output (includes log context in data fields)")
+	fetchCmd.Flags().BoolVarP(&raw, "raw", "r", false, "Raw JSON output")
 }
 
 func fetch(cmd *cobra.Command, args []string) error {
@@ -91,8 +94,16 @@ func fetch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if cmd.Flags().Lookup("verbose").Changed && cmd.Flags().Lookup("raw").Changed {
+		return fmt.Errorf("Can't set both --raw and --verbose")
+	}
+
 	if verbose {
 		eventTemplate = verboseFormatString
+	}
+
+	if raw {
+		eventTemplate = rawFormatString
 	}
 
 	output, err := template.New("event").Funcs(templateFuncMap).Parse(eventTemplate)

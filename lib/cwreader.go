@@ -23,13 +23,13 @@ const (
 // group
 type CloudwatchLogsReader struct {
 	logGroupName string
-	logStreams   []*cloudwatchlogs.LogStream
 	svc          *cloudwatchlogs.CloudWatchLogs
 	nextToken    *string
 	eventCache   *lru.Cache
 	start        time.Time
 	end          time.Time
 	error        error
+	streamPrefix string
 }
 
 // NewCloudwatchLogsReader takes a group and optionally a stream prefix, start and
@@ -38,13 +38,7 @@ func NewCloudwatchLogsReader(group string, streamPrefix string, start time.Time,
 	session := session.New()
 	svc := cloudwatchlogs.New(session)
 
-	lg, err := getLogGroup(svc, group)
-	if err != nil {
-		return nil, err
-	}
-
-	streams, err := getLogStreams(svc, lg, streamPrefix, start, end)
-	if err != nil {
+	if _, err := getLogGroup(svc, group); err != nil {
 		return nil, err
 	}
 
@@ -55,11 +49,11 @@ func NewCloudwatchLogsReader(group string, streamPrefix string, start time.Time,
 
 	reader := &CloudwatchLogsReader{
 		logGroupName: group,
-		logStreams:   streams,
 		svc:          svc,
 		eventCache:   cache,
 		start:        start,
 		end:          end,
+		streamPrefix: streamPrefix,
 	}
 
 	return reader, nil
@@ -67,8 +61,8 @@ func NewCloudwatchLogsReader(group string, streamPrefix string, start time.Time,
 
 // ListStreams returns any log streams that match the params given in the
 // reader's constructor.  Will return at most `MaxStreams` streams
-func (c *CloudwatchLogsReader) ListStreams() []*cloudwatchlogs.LogStream {
-	return c.logStreams
+func (c *CloudwatchLogsReader) ListStreams() ([]*cloudwatchlogs.LogStream, error) {
+	return c.getLogStreams()
 }
 
 // StreamEvents returns a channel where you can read events matching the params
@@ -100,8 +94,13 @@ func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 		params.EndTime = aws.Int64(endTime)
 	}
 
-	if len(c.logStreams) > 0 {
-		params.LogStreamNames = streamsToNames(c.logStreams)
+	if c.streamPrefix != "" {
+		streams, err := c.getLogStreams()
+		if err != nil {
+			c.error = err
+			return
+		}
+		params.LogStreamNames = streamsToNames(streams)
 	}
 
 	for {
@@ -163,15 +162,15 @@ func getLogGroup(svc *cloudwatchlogs.CloudWatchLogs, name string) (*cloudwatchlo
 	return resp.LogGroups[0], nil
 }
 
-func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.LogGroup, streamPrefix string, start time.Time, end time.Time) ([]*cloudwatchlogs.LogStream, error) {
+func (c *CloudwatchLogsReader) getLogStreams() ([]*cloudwatchlogs.LogStream, error) {
 	params := &cloudwatchlogs.DescribeLogStreamsInput{
-		LogGroupName: group.LogGroupName,
+		LogGroupName: aws.String(c.logGroupName),
 	}
 
 	sortByTime := false
-	if streamPrefix != "" {
+	if c.streamPrefix != "" {
 		// If we are looking for a specific stream, search by prefix
-		params.LogStreamNamePrefix = aws.String(streamPrefix)
+		params.LogStreamNamePrefix = aws.String(c.streamPrefix)
 	} else {
 		// If not, just give us the most recently active
 		params.OrderBy = aws.String("LastEventTime")
@@ -179,14 +178,14 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 		sortByTime = true
 	}
 
-	startTimestamp := start.Unix() * 1e3
+	startTimestamp := c.start.Unix() * 1e3
 	endTimestamp := time.Now().Unix() * 1e3
-	if !end.IsZero() {
-		endTimestamp = end.Unix() * 1e3
+	if !c.end.IsZero() {
+		endTimestamp = c.end.Unix() * 1e3
 	}
 
 	streams := []*cloudwatchlogs.LogStream{}
-	if err := svc.DescribeLogStreamsPages(params, func(o *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
+	if err := c.svc.DescribeLogStreamsPages(params, func(o *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
 		pastWindow := false
 		for _, s := range o.LogStreams {
 			if len(streams) >= MaxStreams {
@@ -231,8 +230,8 @@ func getLogStreams(svc *cloudwatchlogs.CloudWatchLogs, group *cloudwatchlogs.Log
 	}
 	sort.Sort(sort.Reverse(ByLastEvent(streams)))
 	if len(streams) == 0 {
-		if streamPrefix != "" {
-			return nil, fmt.Errorf("No log streams found matching task prefix '%s' in your time window.  Consider adjusting your time window with --since and/or --until", streamPrefix)
+		if c.streamPrefix != "" {
+			return nil, fmt.Errorf("No log streams found matching task prefix '%s' in your time window.  Consider adjusting your time window with --since and/or --until", c.streamPrefix)
 		} else {
 			return nil, errors.New("No log streams found in your time window.  Consider adjusting your time window with --since and/or --until")
 		}

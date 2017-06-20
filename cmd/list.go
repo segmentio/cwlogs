@@ -51,7 +51,7 @@ func list(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	streams := logReader.ListStreams()
+	streams, err := logReader.ListStreams()
 	if err != nil {
 		return err
 	}

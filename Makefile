@@ -1,7 +1,6 @@
 version := $$CIRCLE_TAG
 
 release: gh-release govendor clean dist
-	govendor sync
 	github-release release \
 	--security-token $$GH_LOGIN \
 	--user segmentio \
@@ -30,6 +29,7 @@ clean:
 
 dist:
 	mkdir dist
+	govendor sync
 	GOOS=darwin GOARCH=amd64 go build -o dist/cwlogs-$(version)-darwin-amd64
 	GOOS=linux GOARCH=amd64 go build -o dist/cwlogs-$(version)-linux-amd64
 

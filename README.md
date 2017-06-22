@@ -7,7 +7,7 @@ Simple CLI for viewing cloudwatch logs
 To install:
 
 ```bash
-$ go install github.com/segmentio/cwlogs/cmd
+$ go get github.com/segmentio/cwlogs
 ```
 
 ## Authenticating

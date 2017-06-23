@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/doublerebel/bellows"
+	"github.com/segmentio/bellows"
 	"github.com/segmentio/ecs-logs-go"
 )
 

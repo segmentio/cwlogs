@@ -159,12 +159,6 @@
 			"revisionTime": "2017-05-09T20:44:18Z"
 		},
 		{
-			"checksumSHA1": "RCgVnrAV/eHZoFkh3RIMuKoDLUc=",
-			"path": "github.com/doublerebel/bellows",
-			"revision": "f177d92a03d33226a1e1777e4b3a5d824bd2598f",
-			"revisionTime": "2016-03-02T23:20:33Z"
-		},
-		{
 			"checksumSHA1": "16fWSep+3jUx8wADdbiTxSHjW14=",
 			"path": "github.com/fatih/color",
 			"revision": "9131ab34cf20d2f6d83fdc67168a5430d1c7dc23",
@@ -228,6 +222,12 @@
 			"path": "github.com/russross/blackfriday",
 			"revision": "bcc0a711c5e6bbe72c7cb13d81c7109b45267fd2",
 			"revisionTime": "2017-05-09T20:44:18Z"
+		},
+		{
+			"checksumSHA1": "8tlDm9mgRwayOPaf3zuDa5umWb4=",
+			"path": "github.com/segmentio/bellows",
+			"revision": "218d75d8c3de824ac9e7dd066da357bd5e09b9b8",
+			"revisionTime": "2017-06-23T18:19:00Z"
 		},
 		{
 			"checksumSHA1": "sLM5tRtL85eSdaxblyygnEB9kUI=",

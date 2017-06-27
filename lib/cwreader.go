@@ -85,7 +85,7 @@ func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 		StartTime:    aws.Int64(startTime),
 	}
 
-	if !follow {
+	if !follow && c.end.IsZero() {
 		c.end = time.Now()
 	}
 

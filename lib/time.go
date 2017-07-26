@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"strconv"
 	"strings"
 	"time"
 )
@@ -91,7 +92,15 @@ func GetTime(value string, reference time.Time) (time.Time, error) {
 	}
 
 	if err != nil {
-		return time.Unix(0, 0), err // was probably an RFC3339 like timestamp but the parser failed with an error
+		if strings.Contains(value, "-") {
+			return time.Unix(0, 0), err // was probably an RFC3339 like timestamp but the parser failed with an error
+		}
+		intVal, err := strconv.Atoi(value)
+		if err != nil {
+			return time.Unix(0, 0), err
+		}
+
+		t = time.Unix(int64(intVal), 0)
 	}
 
 	return t, nil

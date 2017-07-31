@@ -24,7 +24,6 @@ const (
 type CloudwatchLogsReader struct {
 	logGroupName string
 	svc          *cloudwatchlogs.CloudWatchLogs
-	nextToken    *string
 	eventCache   *lru.Cache
 	start        time.Time
 	end          time.Time
@@ -81,7 +80,6 @@ func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 	params := &cloudwatchlogs.FilterLogEventsInput{
 		Interleaved:  aws.Bool(true),
 		LogGroupName: aws.String(c.logGroupName),
-		NextToken:    c.nextToken,
 		StartTime:    aws.Int64(startTime),
 	}
 
@@ -104,27 +102,26 @@ func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 	}
 
 	for {
-		if err := c.svc.FilterLogEventsPages(params, func(o *cloudwatchlogs.FilterLogEventsOutput, lastPage bool) bool {
-			for _, event := range o.Events {
-				if _, ok := c.eventCache.Peek(*event.EventId); !ok {
-					eventChan <- NewEvent(*event, c.logGroupName)
-					c.eventCache.Add(*event.EventId, nil)
-				}
-			}
-			c.nextToken = o.NextToken
-			return !lastPage
-		}); err != nil {
+		o, err := c.svc.FilterLogEvents(params)
+		if err != nil {
 			c.error = err
 			close(eventChan)
 			return
 		}
 
-		if !follow {
+		for _, event := range o.Events {
+			if _, ok := c.eventCache.Peek(*event.EventId); !ok {
+				eventChan <- NewEvent(*event, c.logGroupName)
+				c.eventCache.Add(*event.EventId, nil)
+			}
+		}
+
+		if o.NextToken != nil {
+			params.NextToken = o.NextToken
+		} else {
 			close(eventChan)
 			return
 		}
-
-		time.Sleep(5 * time.Second)
 	}
 }
 

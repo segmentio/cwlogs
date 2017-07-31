@@ -118,7 +118,7 @@ func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 
 		if o.NextToken != nil {
 			params.NextToken = o.NextToken
-		} else {
+		} else if !follow {
 			close(eventChan)
 			return
 		}

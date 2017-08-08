@@ -96,6 +96,7 @@ func (c *CloudwatchLogsReader) pumpEvents(eventChan chan<- Event, follow bool) {
 		streams, err := c.getLogStreams()
 		if err != nil {
 			c.error = err
+			close(eventChan)
 			return
 		}
 		params.LogStreamNames = streamsToNames(streams)

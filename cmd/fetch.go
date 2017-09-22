@@ -142,5 +142,13 @@ ReadLoop:
 		}
 	}
 
-	return logReader.Error()
+	if err := logReader.Error(); err != nil {
+		if err == context.Canceled {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
 }

@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"syscall"
 	"text/template"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/segmentio/cwlogs/lib"
+	"github.com/segmentio/events"
 	"github.com/spf13/cobra"
 )
 
@@ -111,7 +114,10 @@ func fetch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	eventChan := logReader.StreamEvents(follow)
+	ctx, cancel := events.WithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	eventChan := logReader.StreamEvents(ctx, follow)
 
 	ticker := time.After(7 * time.Second)
 
@@ -136,5 +142,13 @@ ReadLoop:
 		}
 	}
 
-	return logReader.Error()
+	if err := logReader.Error(); err != nil {
+		if err == context.Canceled {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
 }

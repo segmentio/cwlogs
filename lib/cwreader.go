@@ -36,7 +36,7 @@ type CloudwatchLogsReader struct {
 // end time, and returns a reader for any logs that match those parameters.
 func NewCloudwatchLogsReader(group string, streamPrefix string, start time.Time, end time.Time) (*CloudwatchLogsReader, error) {
 	session := session.New()
-	svc := cloudwatchlogs.New(session)
+	svc := cloudwatchlogs.New(session, &aws.Config{MaxRetries: aws.Int(10)})
 
 	if _, err := getLogGroup(svc, group); err != nil {
 		return nil, err
@@ -124,6 +124,8 @@ func (c *CloudwatchLogsReader) pumpEvents(ctx context.Context, eventChan chan<- 
 			close(eventChan)
 			return
 		}
+
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 

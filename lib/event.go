@@ -35,7 +35,7 @@ func NewEvent(cwEvent cloudwatchlogs.FilteredLogEvent, group string) Event {
 	var ecsLogsEvent ecslogs.Event
 	if err := json.Unmarshal([]byte(*cwEvent.Message), &ecsLogsEvent); err != nil {
 		ecsLogsEvent = ecslogs.MakeEvent(ecslogs.INFO, *cwEvent.Message)
-		ecsLogsEvent.Time = time.Unix(*cwEvent.Timestamp, 0)
+		ecsLogsEvent.Time = ParseAWSTimestamp(cwEvent.Timestamp)
 	}
 
 	return Event{

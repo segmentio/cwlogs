@@ -236,6 +236,12 @@
 			"revisionTime": "2017-03-03T02:10:09Z"
 		},
 		{
+			"checksumSHA1": "GSeYfnRDZBxAti6yVcturdvoZB0=",
+			"path": "github.com/segmentio/events",
+			"revision": "406fcabaf3d3a8c0d790b3bbf7e3f795e277124e",
+			"revisionTime": "2017-09-11T16:45:58Z"
+		},
+		{
 			"checksumSHA1": "XXTR/ftEYSqQn4+Y7wNfiJJmq9U=",
 			"origin": "github.com/cpuguy83/go-md2man/vendor/github.com/shurcooL/sanitized_anchor_name",
 			"path": "github.com/shurcooL/sanitized_anchor_name",

@@ -23,6 +23,7 @@ func init() {
 	listCmd.Flags().StringVarP(&task, "task", "t", "", "")
 	listCmd.Flags().StringVarP(&since, "since", "s", "1h", "Show logs streams with activity since timestamp (e.g. 2013-01-02T13:23:37), relative (e.g. 42m for 42 minutes), or all for all logs")
 	listCmd.Flags().StringVarP(&until, "until", "u", "now", "Show log streams until timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
+	listCmd.Flags().IntVarP(&maxStreams, "max-streams", "m", 100, "Maximum number of streams to list")
 }
 
 func list(cmd *cobra.Command, args []string) error {
@@ -45,6 +46,8 @@ func list(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to parse time '%s'", until)
 		}
 	}
+
+	lib.SetMaxStreams(maxStreams)
 
 	logReader, err := lib.NewCloudwatchLogsReader(args[0], task, start, end)
 	if err != nil {

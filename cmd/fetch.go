@@ -40,6 +40,7 @@ var (
 	until         string
 	verbose       bool
 	raw           bool
+	maxStreams    int
 )
 
 // Error messages
@@ -65,6 +66,7 @@ func init() {
 	fetchCmd.Flags().StringVarP(&until, "until", "u", "now", "Fetch logs until timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)")
 	fetchCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose log output (includes log context in data fields)")
 	fetchCmd.Flags().BoolVarP(&raw, "raw", "r", false, "Raw JSON output")
+	fetchCmd.Flags().IntVarP(&maxStreams, "max-streams", "m", 100, "Maximum number of streams to fetch from (for prefix search)")
 }
 
 func fetch(cmd *cobra.Command, args []string) error {
@@ -91,6 +93,8 @@ func fetch(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to parse time '%s'", until)
 		}
 	}
+
+	lib.SetMaxStreams(maxStreams)
 
 	logReader, err := lib.NewCloudwatchLogsReader(args[0], task, start, end)
 	if err != nil {

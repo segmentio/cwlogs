@@ -16,6 +16,9 @@ import (
 const (
 	// MaxEventsPerCall is the maximum number events from a filter call
 	MaxEventsPerCall = 10000
+)
+
+var (
 	// MaxStreams is the maximum number of streams you can give to a filter call
 	MaxStreams = 100
 )
@@ -30,6 +33,11 @@ type CloudwatchLogsReader struct {
 	end          time.Time
 	error        error
 	streamPrefix string
+}
+
+// Set the maximum number of streams for describe/filter calls
+func SetMaxStreams(max int) {
+	MaxStreams = max
 }
 
 // NewCloudwatchLogsReader takes a group and optionally a stream prefix, start and

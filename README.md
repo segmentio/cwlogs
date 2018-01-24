@@ -15,13 +15,13 @@ $ go get github.com/segmentio/cwlogs
 Using `cwlogs` requires you to be running in an environment with an authenticated AWS user which has read access to your logs.  The easiest way to do so is by using `aws-vault`, like:
 
 ```bash
-$ aws-vault exec prod -- cwlogs
+$ aws-okta exec prod -- cwlogs
 ```
 
 For this reason, it is recommended that you create an alias in your shell of choice to save yourself some typing, for example (from my `.zshrc`):
 
 ```
-alias logsprod='aws-vault exec production -- cwlogs'
+alias logsprod='aws-okta exec production -- cwlogs'
 ```
 
 ## Terminology

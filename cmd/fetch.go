@@ -98,7 +98,7 @@ func fetch(cmd *cobra.Command, args []string) error {
 
 	lib.SetMaxStreams(maxStreams)
 
-	logReader, err := lib.NewCloudwatchLogsReader(args[0], task, start, end, filter)
+	logReader, err := lib.NewCloudwatchLogsReader(args[0], task, start, end)
 	if err != nil {
 		return err
 	}

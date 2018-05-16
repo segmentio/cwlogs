@@ -77,19 +77,20 @@ func (c *CloudwatchLogsReader) ListStreams() ([]*cloudwatchlogs.LogStream, error
 // given in the readers constructor.  The channel will be closed once
 // all events are read or an error occurs.  You can check for errors
 // after the channel is closed by calling Error()
-func (c *CloudwatchLogsReader) StreamEvents(ctx context.Context, follow bool) <-chan Event {
+func (c *CloudwatchLogsReader) StreamEvents(ctx context.Context, follow bool, filter string) <-chan Event {
 	eventChan := make(chan Event)
-	go c.pumpEvents(ctx, eventChan, follow)
+	go c.pumpEvents(ctx, eventChan, follow, filter)
 
 	return eventChan
 }
 
-func (c *CloudwatchLogsReader) pumpEvents(ctx context.Context, eventChan chan<- Event, follow bool) {
+func (c *CloudwatchLogsReader) pumpEvents(ctx context.Context, eventChan chan<- Event, follow bool, filter string) {
 	startTime := c.start.Unix() * 1e3
 	params := &cloudwatchlogs.FilterLogEventsInput{
-		Interleaved:  aws.Bool(true),
-		LogGroupName: aws.String(c.logGroupName),
-		StartTime:    aws.Int64(startTime),
+		Interleaved:   aws.Bool(true),
+		LogGroupName:  aws.String(c.logGroupName),
+		StartTime:     aws.Int64(startTime),
+		FilterPattern: aws.String(filter),
 	}
 
 	if !follow && c.end.IsZero() {

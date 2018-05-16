@@ -41,6 +41,7 @@ var (
 	verbose       bool
 	raw           bool
 	maxStreams    int
+	filter        string
 )
 
 // Error messages
@@ -67,6 +68,7 @@ func init() {
 	fetchCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose log output (includes log context in data fields)")
 	fetchCmd.Flags().BoolVarP(&raw, "raw", "r", false, "Raw JSON output")
 	fetchCmd.Flags().IntVarP(&maxStreams, "max-streams", "m", 100, "Maximum number of streams to fetch from (for prefix search)")
+	fetchCmd.Flags().StringVarP(&filter, "query", "q", "", "Filter and Pattern Syntax")
 }
 
 func fetch(cmd *cobra.Command, args []string) error {
@@ -96,7 +98,7 @@ func fetch(cmd *cobra.Command, args []string) error {
 
 	lib.SetMaxStreams(maxStreams)
 
-	logReader, err := lib.NewCloudwatchLogsReader(args[0], task, start, end)
+	logReader, err := lib.NewCloudwatchLogsReader(args[0], task, start, end, filter)
 	if err != nil {
 		return err
 	}
@@ -121,7 +123,7 @@ func fetch(cmd *cobra.Command, args []string) error {
 	ctx, cancel := events.WithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	eventChan := logReader.StreamEvents(ctx, follow)
+	eventChan := logReader.StreamEvents(ctx, follow, filter)
 
 	ticker := time.After(7 * time.Second)
 

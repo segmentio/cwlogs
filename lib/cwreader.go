@@ -137,7 +137,7 @@ func (c *CloudwatchLogsReader) pumpEvents(ctx context.Context, eventChan chan<- 
 	}
 }
 
-// Error returns an error if one occured while streaming events.
+// Error returns an error if one occurred while streaming events.
 func (c *CloudwatchLogsReader) Error() error {
 	return c.error
 }
